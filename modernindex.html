@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web App</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+  <div class="container" id="loginContainer">
+    <h1>Login</h1>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    <div id="loginError" class="alert alert-danger" style="display:none;">Incorrect username or password.</div>
+  </div>
+  
+  <div class="container" id="appContainer" style="display:none;">
+    <h1>Web App</h1>
+    
+    <!-- Place your app code here -->
+    <button id="retImages" class="btn btn-primary">Show Video </button>
+    <button id="subNewForm" class="btn btn-primary">Submit New Asset</button>
+    <input type="file" id="UpFile">
+    <input type="text" id="FileName" placeholder="File Name">
+    <input type="text" id="userID" placeholder="User ID">
+    <input type="text" id="userName" placeholder="User Name">
+    <div id="ImageList"></div>
+    <script>
+        // The URIs of the REST endpoint
+        const IUPS = "https://prod-40.northeurope.logic.azure.com:443/workflows/26a88ef3d88e4c1f9ec6792b76996dfa/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=BLRHLCwuEj1pAr27OrifOnjejH_MgMaKoqAsnoGn8pA";
+        const RAI = "https://prod-57.northeurope.logic.azure.com:443/workflows/8ec5d33643124c5f94656fdcd1b932e4/triggers/manual/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=nxsLJMrJiTs65ZPo5A5b4wC4FHK0BwfAD5gyyill0ys";
+        const BLOB_ACCOUNT = "https://myblobrivan.blob.core.windows.net/imgshare/";
+    
+    // Handlers for button clicks
+    $(document).ready(function() {
+      $("#retImages").click(function() {
+        // Run the get asset list function
+        getImages();
+      });
+    
+      // Handler for the new asset submission button
+      $("#subNewForm").click(function() {
+        // Execute the submit new asset function
+        submitNewAsset();
+      });
+    });
+    
+    // A function to submit a new asset to the REST endpoint
+    function submitNewAsset() {
+      // Create a form data object
+      let submitData = new FormData();
+      // Get form variables and append them to the form data object
+      submitData.append('FileName', $('#FileName').val());
+      submitData.append('userID', $('#userID').val());
+      submitData.append('userName', $('#userName').val());
+      submitData.append('File', $("#UpFile")[0].files[0]);
+      // Post the form data to the endpoint, note the need to set the content type header
+      $.ajax({
+        url: IUPS,
+        data: submitData,
+        cache: false,
+        enctype: 'multipart/form-data',
+        contentType: false,
+        processData: false,
+        type: 'POST',
+        success: function(data) {
+        }
+      });
+    }
+    
+    // A function to get a list of all the assets and write them to the Div with the AssetList Div
+    function getImages() {
+      // Replace the current HTML in that div with a loading message
+      $('#ImageList').html('<div class="spinner-border" role="status"><span class="sr-only"> &nbsp;</span>');
+      $.getJSON(RAI, function(data) {
+        // Create an array to hold all the retrieved assets
+        let items = [];
+        // Iterate through the returned records and build HTML, incorporating the key values of the record in the data
+        $.each(data, function(key, val) {
+          items.push("<hr />");
+          items.push("<video controls src='"+BLOB_ACCOUNT + val["filepath"] +"' width='400'></video> <br />")
+          items.push("Title : " + val["fileName"] + "<br />");
+          
+        });
+        // Clear the assetlist div
+      $('#ImageList').empty();
+        // Append the contents of the items array to the ImageList Div
+        $("<ul/>", {
+          "class": "my-new-list",
+          html: items.join("")
+        }).appendTo("#ImageList");
+      });
+    }
+    
+      </script>
+    
+  </div>
+  
+  <script>
+    // ... existing JavaScript code ...
+
+    // Login function
+    function loginUser() {
+      const username = $("#username").val();
+      const password = $("#password").val();
+
+      // Replace these with your actual username and password
+      const correctUsername = "admin";
+      const correctPassword = "password123";
+
+      if (username === correctUsername && password === correctPassword) {
+        $("#loginContainer").hide();
+        $("#appContainer").show();
+        $("#loginError").hide();
+      } else {
+        $("#loginError").show();
+      }
+    }
+
+    $(document).ready(function() {
+      $("#loginForm").submit(function(e) {
+        e.preventDefault();
+        loginUser();
+      });
+    });
+
+  </script>
+</body>
+</html>
